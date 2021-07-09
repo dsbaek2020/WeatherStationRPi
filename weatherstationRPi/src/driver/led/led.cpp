@@ -1,9 +1,10 @@
-/*
- * led.cpp
- *
- *  Created on: 2021. 7. 9.
- *      Author: jelly
- */
+/** Simple Sysfs LED control program - written by Derek Molloy
+*    simple OOP  struture for the Exploring Raspberry Pi
+*
+*    This program can be used to easliy control multiple LEDS using a class.
+*    This program uses C++11 for the to_string() function and therefore must
+*    be compiled with the -std=c++11 flag.
+*/
 
 #include "led.h"
 
