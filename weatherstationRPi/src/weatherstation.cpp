@@ -222,7 +222,7 @@ void ControlLED(void){
 		//scanf("%s", &string[0]);
 
 		if(  strcmp(string, "yes") == 0){
-			printf("구매가 완료됐습니다. 감사합니다.\n");
+			printf("테스트를 종료합니다. \n");
 			sleep(1);
 			clear();
 			//result = 1;
@@ -270,6 +270,8 @@ int main(int argc, char *argv[]){
 		}
 
    }
+
+
 
    cout << "End of WeatherStation " << endl;
    return 0;
