@@ -27,6 +27,8 @@
 							<tool id="cdt.managedbuild.tool.gnu.cross.cpp.compiler.786267646" name="Cross G++ Compiler" superClass="cdt.managedbuild.tool.gnu.cross.cpp.compiler">
 								<option IS_BUILTIN_EMPTY="false" IS_VALUE_EMPTY="false" id="gnu.cpp.compiler.option.include.paths.181564808" name="Include paths (-I)" superClass="gnu.cpp.compiler.option.include.paths" useByScannerDiscovery="false" valueType="includePath">
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/src/network}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/src/driver/LowLevelDriver/spi}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/src/driver/LowLevelDriver/i2c}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/src/driver/led}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/src/getCh}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/src/UI_widget}&quot;"/>
@@ -51,8 +53,12 @@
 							</tool>
 						</toolChain>
 					</folderInfo>
+					<fileInfo id="cdt.managedbuild.config.gnu.exe.debug.1711735605.1543441949" name="ADXL345.h" rcbsApplicability="disable" resourcePath="src/driver/LowLevelDriver/i2c/ADXL345.h" toolsToInvoke=""/>
+					<fileInfo id="cdt.managedbuild.config.gnu.exe.debug.1711735605.1216476073" name="testADXL345.cpp" rcbsApplicability="disable" resourcePath="src/driver/LowLevelDriver/spi/testADXL345.cpp" toolsToInvoke="cdt.managedbuild.tool.gnu.cross.cpp.compiler.786267646.90215446">
+						<tool id="cdt.managedbuild.tool.gnu.cross.cpp.compiler.786267646.90215446" name="Cross G++ Compiler" superClass="cdt.managedbuild.tool.gnu.cross.cpp.compiler.786267646"/>
+					</fileInfo>
 					<sourceEntries>
-						<entry excluding="client.cpp" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="src"/>
+						<entry excluding="driver/LowLevelDriver/spi/testADXL345.cpp|driver/LowLevelDriver/spi/SPITest.cpp|driver/LowLevelDriver/i2c/application.cpp|driver/LowLevelDriver/i2c/ADXL345.h|driver/LowLevelDriver/i2c/ADXL345.cpp|client.cpp" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="src"/>
 					</sourceEntries>
 				</configuration>
 			</storageModule>

@@ -126,7 +126,6 @@ void DisplayMainPanel(void){
 	"Clinet IP: 192.168.0.6 \n"
 	"Rx Msg: Start_AirSensor \n"
 	"LED Brightness: 70%  \n"
-
 	);
 
 	printf(" ____  _____ ____  _   _  \n");
