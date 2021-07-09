@@ -14,6 +14,11 @@
 #include <pthread.h>
 #include <string.h>
 
+
+//#include <CppLinuxSerial/SerialPort.hpp> // 보류,   리눅스 termios 라이브러리를 사용할 예정 이므로
+
+
+
 using namespace std;
 using namespace exploringRPi;
 
