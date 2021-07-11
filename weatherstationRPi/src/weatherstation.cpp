@@ -155,7 +155,7 @@ void *DisplayMainView(void *socket)
 }
 
 
-
+//
 void ControlLED(void){
 
 	cout << "Starting the makeLEDs program" << endl;
