@@ -1,22 +1,17 @@
 //============================================================================
 // Name        : weatherstation.cpp
-// Author      : 
-// Version     :
+// Author      : choiSY, kimAR, baekDS
+// Version     : ver0.5
 // Copyright   : Your copyright notice
-// Description : Hello World in C++, Ansi-style
+// Description : Raspberry Pi weatherStation(Air Sensor, LED Control) in C++, Ansi-style
 //============================================================================
 #include <iostream>
 #include "SocketServer.h"
 #include "ui.h"
 #include "getch.h"
 #include "led.h"
-
 #include <pthread.h>
 #include <string.h>
-
-
-//#include <CppLinuxSerial/SerialPort.hpp> // 보류,   리눅스 termios 라이브러리를 사용할 예정 이므로
-
 
 
 using namespace std;
