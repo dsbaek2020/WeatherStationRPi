@@ -22,7 +22,7 @@
 using namespace std;
 using namespace exploringRPi;
 
-#define LED_PWM_DELAY  20000 // 20 milliseconds
+#define LED_PWM_DELAY  20000 // 20 milliseconds  0.02sec
 
 
 typedef struct Point {
@@ -238,24 +238,94 @@ void ControlLED(void){
 	led2.displayState();            // display final GPIO17 state
 }
 
-//#define APP_MODE
+typedef struct {
+	int LED_Control;
+	int pm_25;
+	int pm_100;
+}DeviceControl_t;
+ DeviceControl_t DevCtrl;
+
+
+void *serverWeather(void *socket) {
+
+	string RxData;
+	SocketServer *p_server;
+	p_server = (SocketServer*)socket;
+
+	while(1) {
+		RxData = p_server->receive(1024);
+		DevCtrl.LED_Control=stoi(RxData);
+
+	}
+
+
+}
+
+void *LedService(void*i){
+	LED led1(4);          // create two LED objects
+	int BrightnessInt;
+	int ledOnTime;
+	int ledOffTime;
+
+	while(1){
+		BrightnessInt=DevCtrl.LED_Control;
+    	//----------------------------------
+    	//  여기서 LED control 한다.
+		ledOnTime =int(LED_PWM_DELAY*((float)BrightnessInt/100.0));
+		ledOffTime = LED_PWM_DELAY-ledOnTime;
+
+		led1.turnOn();
+		usleep(ledOnTime);
+
+		led1.turnOff();
+		usleep(ledOffTime);
+
+	}
+
+};
+
+
+
+#define APP_MODE
 
 int main(int argc, char *argv[]){
+	DevCtrl.LED_Control = 0;
+	DevCtrl.pm_25 = 0;
+	DevCtrl.pm_100 = 0;
 
 
 	int userCommand =0;
+
+	printf("The current system date is %s\n", __DATE__);
+	printf("The current system time is %s\n", __TIME__);
+
+	printf("Start Weather Station Server \n");
+
+
+
 	SocketServer server(54321);
+
 #ifdef  APP_MODE
    cout << "Listening for a connection..." << endl;
    server.listen();
 #endif
 
 
-   pthread_t thread_t;
+   pthread_t UIthread_t, TCPthread_t, LEDthread_t;
 
-   if(pthread_create(&thread_t, NULL, DisplayMainView, (void*)&server) < 0)
+   if(pthread_create(&UIthread_t, NULL, DisplayMainView, (void*)&server) < 0)
    {
-	   perror("thread create error:");
+	   perror("UIthread create error:");
+	   exit(0);
+   }
+   if(pthread_create(&TCPthread_t, NULL, serverWeather, (void*)&server) < 0)
+   {
+	   perror("TCPthread create error:");
+	   exit(0);
+   }
+   if(pthread_create(&LEDthread_t, NULL, LedService, 0) < 0)
+   {
+	   perror("LEDthread create error:");
 	   exit(0);
    }
 
