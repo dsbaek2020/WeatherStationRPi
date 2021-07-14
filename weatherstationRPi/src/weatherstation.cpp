@@ -255,10 +255,7 @@ void *serverWeather(void *socket) {
 	while(1) {
 		RxData = p_server->receive(1024);
 		DevCtrl.LED_Control=stoi(RxData);
-
 	}
-
-
 }
 
 void *LedService(void*i){
@@ -279,9 +276,7 @@ void *LedService(void*i){
 
 		led1.turnOff();
 		usleep(ledOffTime);
-
 	}
-
 };
 
 
