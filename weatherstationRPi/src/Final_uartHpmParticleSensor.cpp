@@ -1,15 +1,16 @@
-//Author : ChoiSY
-//2021.8.27(금)
+//Author : KimYL, ChoiSY
+//2021.9.3(금)
 
-
-
-
+#include "ArduiPi_OLED_lib.h"
+#include "ArduiPi_OLED.h"
+#include "Adafruit_GFX.h"
 #include<stdio.h>
 #include<fcntl.h>
 #include<unistd.h> //for sleep function
 #include<termios.h>
 #include<string.h>
 #include<stdlib.h>
+#include<ctime>
 
 
 ////#include<wiringPi.h>
@@ -54,6 +55,11 @@ enum responseRxStatus{
 
 
 int main(int argc, char *argv[]){
+   ArduiPi_OLED display;
+   if(!display.init(OLED_I2C_RESET, OLED_ADAFRUIT_I2C_128x64)){
+	perror("Failed to set up the dispay\n");
+	return -1; }
+
    int client, count=0;
    unsigned char c;
    char rxBuff[10];
@@ -109,6 +115,27 @@ int main(int argc, char *argv[]){
    }while(read(client,&c,1)>0);
    printf("\n");
 
+    printf("Setting up the I2C Display output\n");
+    display.begin();
+    display.clearDisplay();
+    display.setTextSize(1);
+    display.setTextColor(WHITE);
+    display.setCursor(27,5);
+    time_t t = time(0);
+    struct tm *now = localtime(&t);
+    display.setCursor(35,8);
+  //  display.printf("%2d/%2d/%2d", now -> tm_hour, now->tm_mday,(now->tm_year+1900));
+    display.printf("Hello");
+    display.display();   
+   // display.close();
+
+
+
+
+
+
+
+
    //열번만 센서값을 읽어와서 전시해 본다.
    int k = 0;
    while(1){
@@ -117,8 +144,7 @@ int main(int argc, char *argv[]){
         perror("Error: Failed to write to the sensor\n");
         return -1;
       }
-
-
+    
      //센서 데이터 수신 알고리즘 작성 부분 (센서 전원이 중간에 다시켜지는 상황까지 고려한 알고리즘)------------
        //여기에 코딩하세요
 
@@ -167,8 +193,12 @@ int main(int argc, char *argv[]){
 		if(read(client,&rxSensorResponse.resp.dataField,5)==5){
 			PM10 = rxSensorResponse.resp.dataField[2]*256 + rxSensorResponse.resp.dataField[3];
 			PM25 = rxSensorResponse.resp.dataField[0]*256 + rxSensorResponse.resp.dataField[1];
-			printf("PM10 = %d, PM25 = %d \n", PM10, PM25);
-
+			display.clearDisplay();
+                        display.setCursor(27,5);  
+			display.printf("PM10 = %d, PM25 = %d \n", PM10, PM25);
+			display.display();
+			sleep(2);
+			
 			/*or(int i=0; i<8; i++){
 				printf("[%x] ", rxSensorResponse.rxByte[i]);
 			}*/
@@ -203,11 +233,10 @@ int main(int argc, char *argv[]){
         printf("Bad closed \n");
       }
     }
-
+   display.close();
    close(client);
    return 0;
 
 
 }
-
 
