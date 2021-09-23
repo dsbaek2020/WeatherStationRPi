@@ -1,5 +1,5 @@
-//Author : KimYL, ChoiSY
-//2021.9.3(금)
+//Author : KimYL, ChoiSY(*)
+//2021.9.27(목)
 
 
 #include<stdio.h>
