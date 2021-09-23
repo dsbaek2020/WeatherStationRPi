@@ -1,16 +1,19 @@
 //Author : KimYL, ChoiSY
 //2021.9.3(금)
 
-#include "ArduiPi_OLED_lib.h"
-#include "ArduiPi_OLED.h"
-#include "Adafruit_GFX.h"
+
 #include<stdio.h>
 #include<fcntl.h>
 #include<unistd.h> //for sleep function
 #include<termios.h>
 #include<string.h>
 #include<stdlib.h>
-#include<ctime>
+#include "GPIO.h"
+#include "ArduiPi_OLED_lib.h"
+#include "ArduiPi_OLED.h"
+#include "Adafruit_GFX.h"
+
+
 
 
 ////#include<wiringPi.h>
@@ -45,44 +48,91 @@ typedef union rxSensorResponse{
 }t_rxSensorResponse;
 
 
-enum responseRxStatus{
+typedef enum responseRxStatus{
 	Ready,
 	Head,
 	Length,
 	CMD
-};
+}t_rxStatus;
 
 
+//Define Function Prototype -------------
+static int initOLED(ArduiPi_OLED *pOledHandle);
+static int initUART(void);
+static int initParticleSensor(int client);
+static t_rxStatus readPacket(int client,t_rxSensorResponse *pSensorData);
+//---------------------------------------
 
 int main(int argc, char *argv[]){
    ArduiPi_OLED display;
-   if(!display.init(OLED_I2C_RESET, OLED_ADAFRUIT_I2C_128x64)){
-	perror("Failed to set up the dispay\n");
-	return -1; }
-
-   int client, count=0;
-   unsigned char c;
-   char rxBuff[10];
-
-   char *command = (char*) malloc(255*sizeof(char));
-
-   char controlVal = 0;
+   //GPIO switch(17);
    t_rxSensorResponse rxSensorResponse;
+   int client, count=0;
    short PM10 = 0;
    short PM25 = 0;
+   unsigned char c;
+   char rxBuff[10];
+      
+   if(initOLED(&display) == -1){
+      return -1;
+   }
+   client=initUART();
+   
+   if(initParticleSensor(client) == -1){
+      return -1;
+   }
+
+   while(1){
+      //Send SensorReadCommand from RPi to Sensor with UART(ttyUSB0).
+      if(write(client, readResultCmd, sizeof(readResultCmd))<0){
+        perror("Error: Failed to write to the sensor\n");
+        return -1;
+      }
+
+      if(readPacket(client, &rxSensorResponse) == CMD){
+		if(read(client,&rxSensorResponse.resp.dataField,5)==5){
+			PM10 = rxSensorResponse.resp.dataField[2]*256 + rxSensorResponse.resp.dataField[3];
+			PM25 = rxSensorResponse.resp.dataField[0]*256 + rxSensorResponse.resp.dataField[1];
+			printf("PM10 = %d, PM25 = %d \n", PM10, PM25);
+		}
+      }
+      usleep(100000); //100ms  //센서 데이터 받는 주기를 0.1초마다 수행하기 위해서 딜레이
+   }
+
+   close(client);
+   return 0;
+}
 
 
-   ////wiringPiSetupGpio();                    // initialize wiringPi
-   ////pinMode(LED_GPIO, OUTPUT);              // the LED is an output
-   //GPIO outGPIO(LED_GPIO);
-   //outGPIO.setDirection(OUTPUT);
+int initOLED(ArduiPi_OLED *pOledHandle){
+    
+    if(!pOledHandle->init(OLED_I2C_RESET, OLED_ADAFRUIT_I2C_128x64)){
+        perror("Failed to set up the display\n");
+        return -1;
+    }
+    printf("Setting up the I2C Display output\n");
+    pOledHandle->begin();
+    pOledHandle->clearDisplay();
+    pOledHandle->setTextSize(1);
+    pOledHandle->setTextColor(WHITE);
+    pOledHandle->setCursor(27,5);
+    pOledHandle->printf("helllo");
+    pOledHandle->display();
+    pOledHandle->close();
+    printf("End of the I2C Display program\n");
+    
+    return 0;
+}
 
-
+int initUART(void){
+   int client;
+   
+      //----uart init (linux ap: open , termios)-----------------------------------------
    if ((client = open("/dev/ttyUSB0", O_RDWR | O_NOCTTY | O_NDELAY ))<0){
       perror("UART: Failed to open the file.\n");
       return -1;
    }
-
+   
    struct termios options;
    tcgetattr(client, &options);
    options.c_cflag = B9600 | CS8 | CREAD | CLOCAL;
@@ -96,11 +146,15 @@ int main(int argc, char *argv[]){
    tcflush(client, TCIFLUSH);
    //fcntl(STDIN_FILENO, F_SETFL, O_NONBLOCK);  // make reads non-blocking
    tcsetattr(client, TCSANOW, &options);
-   /*if (message(client, "\n\rRPi Serial Server running")<0){
-      perror("UART: Failed to start server.\n");
-      return -1;
-   }*/
+   //---end uart init-----------------------------------------------------------------
+   
+   return client;
+   
+}
+int initParticleSensor(int client){
+//---초기화--HPMA particle sensor -------------------------------------------
    //자동 전송모드 비활성화
+   char c;
    if (write(client, stopAutoSendCmd, sizeof(stopAutoSendCmd))<0){
 	  perror("Error: stopAutoSendCmd Failed to write to the sensor\n");
 	  return -1;
@@ -114,129 +168,67 @@ int main(int argc, char *argv[]){
 	   usleep(20000); //rx time (1 byte)
    }while(read(client,&c,1)>0);
    printf("\n");
-
-    printf("Setting up the I2C Display output\n");
-    display.begin();
-    display.clearDisplay();
-    display.setTextSize(1);
-    display.setTextColor(WHITE);
-    display.setCursor(27,5);
-    time_t t = time(0);
-    struct tm *now = localtime(&t);
-    display.setCursor(35,8);
-  //  display.printf("%2d/%2d/%2d", now -> tm_hour, now->tm_mday,(now->tm_year+1900));
-    display.printf("Hello");
-    display.display();   
-   // display.close();
-
-
-
-
-
-
-
-
-   //열번만 센서값을 읽어와서 전시해 본다.
-   int k = 0;
-   while(1){
-      //Send SensorReadCommand from RPi to Sensor with UART(ttyUSB0).
-      if(write(client, readResultCmd, sizeof(readResultCmd))<0){
-        perror("Error: Failed to write to the sensor\n");
-        return -1;
-      }
-    
-     //센서 데이터 수신 알고리즘 작성 부분 (센서 전원이 중간에 다시켜지는 상황까지 고려한 알고리즘)------------
-       //여기에 코딩하세요
-
-      char readData;
-      enum responseRxStatus rxStatus;
-      rxStatus = Ready;
-      char errorCount =0;
-
-      do{
-    	  if(read(client,&readData,1)>0){
-
-    		  if(rxStatus == Ready && readData == 0x40){
-    			  rxStatus = Head;
-    			  rxSensorResponse.resp.head = readData;
-
-    		  }
-    		  else if(rxStatus == Head && readData == 0x05){
-    			  rxStatus = Length;
-    			  rxSensorResponse.resp.len = readData;
-    		  }
-    		  else if(rxStatus == Length && readData == 0x04){
-    		      rxStatus = CMD;
-    		      rxSensorResponse.resp.cmd = readData;
-    		  }
-    		  else{
-    			  rxStatus = Ready;
-    			  rxSensorResponse.rxByte[0] = 0;
-    			  rxSensorResponse.rxByte[1] = 0;
-    			  rxSensorResponse.rxByte[2] = 0;
-    			  errorCount++;
-    		  }
-
-    	  }
-    	  else{
-    		  errorCount++;
-
-    		  //에러를 카운트 한다. 만약 에러가 100개 넘으면 break 해서 나온다.
-    		  if(errorCount == 10){
-    			  break;
-    		  }
-    	  }
-
-      }while(rxStatus != CMD);
-
-      if(rxStatus == CMD){
-		if(read(client,&rxSensorResponse.resp.dataField,5)==5){
-			PM10 = rxSensorResponse.resp.dataField[2]*256 + rxSensorResponse.resp.dataField[3];
-			PM25 = rxSensorResponse.resp.dataField[0]*256 + rxSensorResponse.resp.dataField[1];
-			display.clearDisplay();
-                        display.setCursor(27,5);  
-			display.printf("PM10 = %d, PM25 = %d \n", PM10, PM25);
-			display.display();
-			sleep(2);
-			
-			/*or(int i=0; i<8; i++){
-				printf("[%x] ", rxSensorResponse.rxByte[i]);
-			}*/
-			//printf("\n");
-		}
-      }
-
-
-     // -------------------------------------------------------------------------------------
-
-
-	  usleep(100000); //100ms  //센서 데이터 받는 주기를 0.1초마다 수행하기 위해서 딜레이
-	  //sleep(1);
-      k++;
-   }
-
-    //센서를 정지 시킨다.
-    if(write(client, stopParticleMes,4)<0){
-    perror("Error : Failed to write to the sensor\n");
-    return -1;
-    }
-
-    //정지가 되었는지 확인한다. NOTE ***** (디버깅 필요함, 데이터가 0x40, 0x05가 계속 수신됨)  << NOTE *****
-    char response[2];
-    if(read(client,&response,2)==2){
-
-      printf("[%x], [%x] ", response[0], response[1]);
-
-      if((response[0]==0xa5) && (response[1]==0xa5)){
-        printf("closed!!!!!! \n ");
-      }else{
-        printf("Bad closed \n");
-      }
-    }
-   display.close();
-   close(client);
+   
    return 0;
-
+   
+   //------------------------------------------------------------------------
 
 }
+
+t_rxStatus readPacket(int client, t_rxSensorResponse *pSensorData){
+   char readData;
+   t_rxStatus rxStatus;
+   t_rxSensorResponse rxSensorResponse;
+   
+   rxStatus = Ready;
+   char errorCount =0;
+   do{
+      if(read(client,&readData,1)>0){
+
+	 if(rxStatus == Ready && readData == 0x40){
+	    rxStatus = Head;
+	    rxSensorResponse.resp.head = readData;
+
+	 }
+	 else if(rxStatus == Head && readData == 0x05){
+	    rxStatus = Length;
+	    rxSensorResponse.resp.len = readData;
+	 }
+	 else if(rxStatus == Length && readData == 0x04){
+	    rxStatus = CMD;
+	    rxSensorResponse.resp.cmd = readData;
+	 }
+	 else{
+	    rxStatus = Ready;
+	    rxSensorResponse.rxByte[0] = 0;
+	    rxSensorResponse.rxByte[1] = 0;
+	    rxSensorResponse.rxByte[2] = 0;
+	    errorCount++;
+	 }
+
+      }
+      else{
+	 errorCount++;
+
+	 //에러를 카운트 한다. 만약 에러가 100개 넘으면 break 해서 나온다.
+	 if(errorCount == 10){
+	    break;
+	 }
+      }
+
+   }while(rxStatus != CMD);
+   
+   memcpy(pSensorData, &rxSensorResponse, sizeof(rxSensorResponse));
+   
+   return rxStatus;
+
+   /*if(rxStatus == CMD){
+      return 0;
+   }else{
+      return -1;
+   }*/
+}
+
+
+
 
